@@ -1143,7 +1143,8 @@ class FeatureInputComponent(ExplainerComponent):
         ]
 
         if self.sort_features == "shap":
-            self._input_features = self.explainer.columns_ranked_by_shap()
+            shap_ranked_features = self.explainer.columns_ranked_by_shap()
+            self._input_features = shap_ranked_features
         elif self.sort_features == "alphabet":
             self._input_features = sorted(self.explainer.merged_cols.tolist())
         else:

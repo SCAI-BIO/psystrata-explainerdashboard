@@ -357,7 +357,7 @@ def plotly_precision_plot(precision_df, cutoff=None, labels=None, pos_label=None
         yaxis=dict(title="counts"),
         yaxis2=dict(
             title="percentage",
-            titlefont=dict(color="rgb(148, 103, 189)"),
+            #titlefont=dict(color="rgb(148, 103, 189)"),
             tickfont=dict(color="rgb(148, 103, 189)"),
             overlaying="y",
             side="right",
