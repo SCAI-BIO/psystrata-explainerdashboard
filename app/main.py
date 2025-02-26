@@ -134,14 +134,20 @@ db2 = ExplainerDashboard(explainer,
                          # whatif components that are hidden
                          hide_whatifindexselector=True,
                          hide_whatifpdp=True,
+                         hide_whatifcontributiongraph=True,
+                         # hide the powered by ExplainerDashboard logo
                          hide_poweredby=True,
                          )
 
 hub = ExplainerHub(dashboards=[db1, db2],
-                   title='PsychSTRATA ML Dashboard',
-                   description='A dashboard to explain the treatment resistance model. Current data displayed is fully'
-                               'synthetic and does not represent real patients. Model conclusions are based on randomly'
-                               'sampled feature distribution and have no clinical relevance.',
+                   title='PsychSTRATA Decision Support Dashboard',
+                   description='The following dashboard is a prototype for a decision Support system addressing '
+                               'Treatment Resistance (TR) in psychiatric patients. The dashboard is designed evaluate '
+                               'potential factors leading to TR based on a trained Machine Learning (ML) model. '
+                               'All data that is currently displayed in the dashboard is fully randomly generated '
+                               'based on data dictionaries and does not relate to or represent real patients. '
+                               'The underlying model was trained on randomly sampled feature distributions - resulting '
+                               'explanations and conclusion are not clinically valid.',
                    n_dashboard_cols=2,
                    url='https://psych-strata.eu/',
                    model_name='Treatment Resistance',

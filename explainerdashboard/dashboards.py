@@ -30,7 +30,7 @@ from dash import html, dcc, Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
-from app.llm import SHAPExplanation
+from app.llm import SHAPSummaryPlotExplanation
 from app.plots import SHAPSummaryPlot
 
 warnings.filterwarnings(
@@ -2371,7 +2371,7 @@ class ExplainerHub:
         shap_summary_plot = SHAPSummaryPlot(shap_values, X_test)
 
         print("Generating SHAP LLM explanation...")
-        explanation = SHAPExplanation(shap_values_df, X_test)
+        explanation = SHAPSummaryPlotExplanation(shap_values_df, X_test)
 
         # Define the SHAP rows for the layout
         shap_rows = [
@@ -2393,7 +2393,6 @@ class ExplainerHub:
         index_page.layout = dbc.Container(
             [
                 dbc.Row([dbc.Col([header])]),
-                dbc.Row([dbc.Col([html.H2("Dashboards:")])]),
                 *dashboard_rows,
                 html.Br(),
                 *shap_rows,

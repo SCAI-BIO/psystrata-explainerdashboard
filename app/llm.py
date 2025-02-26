@@ -1,8 +1,10 @@
+from abc import ABC, abstractmethod
+
 from dash import html
 from ollama import Client
+
 import json
 import pandas as pd
-import re
 import numpy as np
 
 client = Client(host='http://localhost:11434')
@@ -26,13 +28,44 @@ def chat(message) -> str:
         return f"Error during chat request: {e}"
 
 
-class SHAPExplanation:
+class LLMResponse(ABC):
+
+    def __init__(self):
+        self.raw_llm_response = self.get_llm_response()
+
+    @property
+    @abstractmethod
+    def prompt(self) -> str:
+        pass
+
+    def get_llm_response(self):
+        raw_response = chat(self.prompt)
+        self.raw_llm_response = raw_response
+        return raw_response
+
+    def to_list(self):
+        """Convert the LLaMA response into a list of paragraphs"""
+        paragraphs = self.raw_llm_response.split("\n\n")
+        paragraphs = [para.strip() for para in paragraphs if para.strip()]
+        return paragraphs
+
+    def to_dash_component(self):
+        """Convert the LLaMA response into a list of Dash HTML components"""
+        paragraphs = self.to_list()
+        return html.Div([html.P(para) for para in paragraphs])
+
+
+class SHAPSummaryPlotExplanation(LLMResponse):
 
     def __init__(self, shap_df, feature_df):
+        super().__init__()
         self.shap_df = shap_df
         self.feature_df = feature_df
         self.shap_statistical_summary = self.create_statistical_shap_summary()
-        self.prompt = f"""
+
+    @property
+    def prompt(self) -> str:
+        return f"""
         I have a dataset with SHAP values generated from a machine learning model. SHAP values explain how much each 
         factor influenced a prediction. In our case we are predicting treatment resistance, therefore positive SHAP 
         values are indicative of an increased risk of treatment resistance and negativeSHAP values indicate a decreased 
@@ -66,9 +99,8 @@ class SHAPExplanation:
         SHAP impact (e.g. some patients with high values of this feature belonging to group 1 have a higher risk of 
         treatment resistance).
         """
-        self.raw_llm_response = self.get_llm_response()
 
-    def create_statistical_shap_summary(self, limit: int=10) -> pd.DataFrame:
+    def create_statistical_shap_summary(self, limit: int = 10) -> pd.DataFrame:
         """
         Create a summary DataFrame with SHAP value statistics and corresponding feature values.
         """
@@ -96,20 +128,3 @@ class SHAPExplanation:
         summary = summary.sort_values('mean_absolute_shap', ascending=False).head(limit)
 
         return summary
-
-    def get_llm_response(self):
-        raw_response = chat(self.prompt)
-        self.raw_llm_response = raw_response
-        return raw_response
-
-    def to_list(self):
-        """Convert the LLaMA response into a list of paragraphs"""
-        paragraphs = self.raw_llm_response.split("\n\n")
-        paragraphs = [para.strip() for para in paragraphs if para.strip()]
-        return paragraphs
-
-    def to_dash_component(self):
-        """Convert the LLaMA response into a list of Dash HTML components"""
-        paragraphs = self.to_list()
-        return html.Div([html.P(para) for para in paragraphs])
-
