@@ -114,7 +114,8 @@ db1 = ExplainerDashboard(explainer,
                          title="Data Scientist Board",
                          description="A detailed dashboard to explain the treatment resistance model.",
                          decision_trees=False,
-                         whatif=False
+                         whatif=False,
+                         hide_poweredby=True,
                          )
 
 db2 = ExplainerDashboard(explainer,
@@ -132,12 +133,16 @@ db2 = ExplainerDashboard(explainer,
                          hide_contributiongraph=True,
                          # whatif components that are hidden
                          hide_whatifindexselector=True,
-                         hide_whatifpdp=True
+                         hide_whatifpdp=True,
+                         hide_poweredby=True,
                          )
 
 hub = ExplainerHub(dashboards=[db1, db2],
                    title='PsychSTRATA ML Dashboard',
-                   description='A dashboard to explain the treatment resistance model.',
+                   description='A dashboard to explain the treatment resistance model. Current data displayed is fully'
+                               'synthetic and does not represent real patients. Model conclusions are based on randomly'
+                               'sampled feature distribution and have no clinical relevance.',
+                   n_dashboard_cols=2,
                    url='https://psych-strata.eu/',
                    model_name='Treatment Resistance',
                    model_type='Random Forest Classifier',
