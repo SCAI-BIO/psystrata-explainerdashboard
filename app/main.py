@@ -1,3 +1,4 @@
+import shap
 from sklearn.ensemble import RandomForestClassifier
 
 from app.datagen import gen_patients, patients_train_test_split, patient_train_test_names
@@ -90,7 +91,7 @@ cats = ['psychiatrictreatmentsetting_current_v1',
         'occupation_previous_v1'
         ]
 
-patients = gen_patients(100)
+patients = gen_patients(1000)
 patients.to_csv("patients.csv", index=False)
 
 # generate train and test data, index should always be the patient name
@@ -109,12 +110,11 @@ explainer = ClassifierExplainer(model, X_test, y_test,
                                 target="Treatment Resistance",
                                 )
 
-
 db1 = ExplainerDashboard(explainer,
                          title="Data Scientist Board",
                          description="A detailed dashboard to explain the treatment resistance model.",
                          decision_trees=False,
-                         whatif=True
+                         whatif=False
                          )
 
 db2 = ExplainerDashboard(explainer,
@@ -125,7 +125,14 @@ db2 = ExplainerDashboard(explainer,
                          decision_trees=False,
                          shap_dependence=False,
                          shap_interaction=False,
-                         whatif=True
+                         whatif=True,
+                         # Individual predictions components that are hidden
+                         hide_predindexselector=True,
+                         hide_pdp=True,
+                         hide_contributiongraph=True,
+                         # whatif components that are hidden
+                         hide_whatifindexselector=True,
+                         hide_whatifpdp=True
                          )
 
 hub = ExplainerHub(dashboards=[db1, db2],

@@ -15,6 +15,8 @@ import sys
 import re
 import json
 import inspect
+
+import pandas as pd
 import requests
 from typing import List, Union
 from pathlib import Path
@@ -27,6 +29,9 @@ import dash
 from dash import html, dcc, Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
+
+from app.llm import SHAPExplanation
+from app.plots import SHAPSummaryPlot
 
 warnings.filterwarnings(
     "ignore",
@@ -2307,6 +2312,14 @@ class ExplainerHub:
                 card_decks.append(last_row)
             return card_decks
 
+        # Add a text box input here
+        text_input = dbc.Input(
+            id="dashboard-search",
+            type="text",
+            placeholder="Search for a dashboard...",
+            class_name="mb-3",
+        )
+
         header = html.Div(
             [
                 dbc.Container(
@@ -2346,11 +2359,44 @@ class ExplainerHub:
             )
             index_page.title = self.title
 
+        # Generate SHAP values
+        dashboard_explainer = self.dashboards[0].explainer
+        X_test = dashboard_explainer.X
+        # TODO: One class takes values as np.array, the other as pd.DataFrame -> fix this
+        shap_values = dashboard_explainer.shap_explainer.shap_values(X_test)[:,:,1]
+        # transform shap values to dataframe with feature names as columns
+        shap_values_df = pd.DataFrame(shap_values, columns=X_test.columns)
+
+        print("Generating SHAP plot...")
+        shap_summary_plot = SHAPSummaryPlot(shap_values, X_test)
+
+        print("Generating SHAP LLM explanation...")
+        explanation = SHAPExplanation(shap_values_df, X_test)
+
+        # Define the SHAP rows for the layout
+        shap_rows = [
+            html.Br(),
+            dbc.Row([dbc.Col([html.H2("Overall model explanation:")])]),
+            dbc.Row([
+                dbc.Col([
+                    html.H3("SHAP Beeswarm Plot"),
+                    html.P("Summary plot of most impactful features based on SHAP values for the whole test population."),
+                    shap_summary_plot.to_dash_component()
+                ], width=6),
+                dbc.Col([
+                    html.H3("Explanation:"),
+                    explanation.to_dash_component()
+                ], width=6)
+            ])
+        ]
+
         index_page.layout = dbc.Container(
             [
                 dbc.Row([dbc.Col([header])]),
                 dbc.Row([dbc.Col([html.H2("Dashboards:")])]),
                 *dashboard_rows,
+                html.Br(),
+                *shap_rows,
             ],
             fluid=self.fluid,
         )
@@ -2391,9 +2437,12 @@ class ExplainerHub:
             return card_decks
 
         html = to_html.jumbotron(self.title, self.description)
+        html = to_html.jumbotron(self.title, self.description)
+        html += to_html.shap_explanation_textbox("test")
         html += to_html.card_rows(
             *dashboard_cards(self.dashboards, self.n_dashboard_cols)
         )
+        html += to_html.shap_explanation_textbox("test")
         return self._hub_page(html, static=True)
 
     def save_html(

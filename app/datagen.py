@@ -11,8 +11,6 @@ psychatric_history_dict = {
                                       "suicidal ideation", "Other"],
     "Hospitalization_voluntary_involuntary_unknown": ["Voluntary", "Involuntary", "Unknown"],
     "hospitalizedinvolreason_history_v1": ["danger to self", "danger to others", "danger to self and others", "Other"],
-    #"ADHD_current": ["Yes", "No"],
-    #"ASD_current": ["Yes", "No"],
 }
 
 sociodemographic_data_dict = {
@@ -139,7 +137,6 @@ psychiatric_medication_data_dict = {
 
 
 def gen_name():
-    # Expanded lists of first and last names
     first_names = [
         "John", "Jane", "Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Hannah",
         "Isaac", "Julia", "Kevin", "Linda", "Mary", "Nathan", "Olivia", "Peter", "Quinn", "Rachel",
@@ -183,25 +180,45 @@ def gen_sociodemographic_data():
     return sociodemographic_data
 
 
-def gen_medication():
+def gen_medication_with_resistance():
     medication = {}
-    # for each possible medication, there is a high chance the dosage is just 0
+    treatment_resistance_chance = 0  # Start with a low chance of treatment resistance
+
+    # Medication-based logic: Certain medications are more associated with resistance
     for key, value in psychiatric_medication_data_dict.items():
         if random.random() < 0.9:
             medication[key] = 0
         else:
-            medication[key] = random.choice(value)
-    return medication
+            dosage = random.choice(value)
+            medication[key] = dosage
+
+            # If medication is one associated with resistance, increase the chance
+            if key in ["Olanzapine", "Clozapine", "Quetiapine"]:
+                # scale resistance chance based on dosage
+                treatment_resistance_chance += 0.1 * (dosage / 100)
+
+    return medication, treatment_resistance_chance
 
 
 def gen_patient() -> pandas.DataFrame:
+    age = gen_age()
+    medication, medication_resistance_chance = gen_medication_with_resistance()
+
+    # Age-based logic: Older patients are more likely to have treatment resistance
+    # scale medication resistance chance based on age
+    medication_resistance_chance += 0.01 * (age - 50)
+
+    # Determine treatment resistance: 0 or 1 (resistance or not)
+    treatment_resistance = 1 if random.random() < min(1, medication_resistance_chance) else 0
+
+    # Generate patient data
     patient = {
         "Name": gen_name(),
-        "Age": gen_age(),
+        "Age": age,
         **gen_psychatric_history(),
         **gen_sociodemographic_data(),
-        **gen_medication(),
-        "Treatment Resistance": random.choice([0,1])
+        **medication,
+        "Treatment Resistance": treatment_resistance
     }
     return pandas.DataFrame(patient, index=[0])
 
